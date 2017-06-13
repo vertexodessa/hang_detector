@@ -18,6 +18,10 @@ CallbackAction::CallbackAction(ms delay, std::function<void(void*)> callback, vo
     m_userData = userData;
 }
 
+void HangAction::update (time_point now) {
+    m_triggerTime = now + m_delay;
+}
+
 void KillAction::execute() {
     printf("Kill action executed. killing PID %d\n", m_threadId);
     kill(m_threadId, 6);
