@@ -1,22 +1,17 @@
 #include "hang_detector.h"
 
-#include <atomic>
-#include <thread>
-#include <mutex>
-#include <chrono>
-#include <cassert>
-
-using namespace std;
-using namespace std::chrono;
+#include <unistd.h>
+#include <sys/syscall.h>
+#define gettid() syscall(SYS_gettid)
 
 namespace HangDetector {
 
-KillHangAction::KillHangAction(ms delay, int threadId) {
+KillAction::KillAction(ms delay) {
     m_delay = delay;
-    m_threadId = threadId;
+    m_threadId = gettid();
 }
 
-CallbackHangAction::CallbackHangAction(ms delay, std::function<void(void*)> callback, void *userData) {
+CallbackAction::CallbackAction(ms delay, std::function<void(void*)> callback, void *userData) {
     m_delay = delay;
     m_callback = callback;
     m_userData = userData;

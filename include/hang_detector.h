@@ -3,6 +3,9 @@
 
 #include "hang_action.h"
 
+#include <condition_variable>
+#include <queue>
+
 namespace HangDetector {
 
 using ms = std::chrono::milliseconds;
