@@ -53,10 +53,13 @@ void HangDetector::start(milliseconds interval) {
 
 void HangDetector::updateActions() {
     auto copy = m_actions;
+    m_actions = std::priority_queue<std::shared_ptr<HangAction>> {};
+
     for (shared_ptr<HangAction> a = copy.top(); a->triggerTime() <= steady_clock::now(); ) {
         a->update(steady_clock::now());
         a = copy.top();
         copy.pop();
+        m_actions.push(a);
     }
 }
 
@@ -83,8 +86,7 @@ void HangDetector::addAction(shared_ptr<HangAction> a) {
 
 void HangDetector::clearActions() {
     unique_lock<mutex> lock(m_mutex);
-    while(!m_actions.empty())
-        m_actions.pop();
+    m_actions = std::priority_queue<std::shared_ptr<HangAction>> {};
     m_cv.notify_one();
 }
 

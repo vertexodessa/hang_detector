@@ -28,7 +28,7 @@ private:
     std::condition_variable m_cv;
     std::mutex m_mutex;
     std::priority_queue<std::shared_ptr<HangAction>> m_actions;
-    bool m_shouldQuit {false};
+    volatile bool m_shouldQuit {false};
 
     void updateActions();
 };
