@@ -30,7 +30,7 @@ protected:
 class KillAction : public HangAction {
 public:
     KillAction(ms delay);
-    void execute() final {};
+    void execute() final;
 private:
     pid_t  m_threadId  {-1};
 };
@@ -38,7 +38,7 @@ private:
 class CallbackAction : public HangAction {
 public:
     CallbackAction(ms delay, std::function<void(void*)> callback, void *userData);
-    void execute() final {};
+    void execute() final;
 private:
     std::function<void(void*)> m_callback    {nullptr};
     void*                      m_userData    {nullptr};
