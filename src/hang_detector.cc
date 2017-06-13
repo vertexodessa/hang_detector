@@ -11,17 +11,6 @@ using namespace std::chrono;
 
 namespace HangDetector {
 
-HangDetector::HangAction::HangAction(ms delay, int threadId) {
-    m_delay = delay;
-    m_threadId = threadId;
-}
-
-HangDetector::HangAction::HangAction(ms delay, std::function<void(void*)> callback, void *userData) {
-    m_delay = delay;
-    m_callback = callback;
-    m_userData = userData;
-}
-
 HangDetector::HangDetector() {
 }
 
@@ -31,9 +20,9 @@ HangDetector::~HangDetector() {
 
 void HangDetector::start(milliseconds interval) {
     m_interval = interval;
-    time_point<steady_clock> triggerTime = time_point<steady_clock>::max();
+    time_point triggerTime = time_point::max();
     if (!m_actions.empty()) {
-        triggerTime = m_actions.top()->m_triggerTime;
+        triggerTime = m_actions.top()->triggerTime();
     }
 
     m_thread = thread( [&, this] () {
@@ -45,7 +34,7 @@ void HangDetector::start(milliseconds interval) {
                     continue;
 
                 auto copy = m_actions;
-                for (shared_ptr<HangAction> a = copy.top(); a->m_triggerTime <= steady_clock::now(); ) {
+                for (shared_ptr<HangAction> a = copy.top(); a->triggerTime() <= steady_clock::now(); ) {
                     a->execute();
 
                     a = copy.top();
@@ -57,13 +46,12 @@ void HangDetector::start(milliseconds interval) {
 
 void HangDetector::updateActions() {
     auto copy = m_actions;
-    for (shared_ptr<HangAction> a = copy.top(); a->m_triggerTime <= steady_clock::now(); ) {
+    for (shared_ptr<HangAction> a = copy.top(); a->triggerTime() <= steady_clock::now(); ) {
         a->update(steady_clock::now());
         a = copy.top();
         copy.pop();
     }
 }
-
 
 void HangDetector::restart() {
     unique_lock<mutex> lock(m_mutex);

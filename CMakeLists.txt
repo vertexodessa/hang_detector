@@ -14,6 +14,7 @@ include_directories(
 
 set(SRC_FILES
   src/hang_detector.cc
+  src/hang_action.cc
   )
 
 add_library(${LIB_NAME} SHARED ${SRC_FILES})

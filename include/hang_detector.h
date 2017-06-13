@@ -1,37 +1,15 @@
 #ifndef HANGDETECTOR_H
 #define HANGDETECTOR_H
 
-#include <condition_variable>
-#include <functional>
-#include <thread>
-#include <chrono>
-#include <queue>
+#include "hang_action.h"
 
 namespace HangDetector {
 
+using ms = std::chrono::milliseconds;
+using time_point = std::chrono::time_point<std::chrono::steady_clock>;
+
 class HangDetector {
-    using ms = std::chrono::milliseconds;
 public:
-    class HangAction {
-        using time_point = std::chrono::time_point<std::chrono::steady_clock>;
-    public:
-        HangAction(ms delay, int threadId);
-        HangAction(ms delay, std::function<void(void*)> callback, void *userData);
-        void execute();
-    private:
-        friend class HangDetector;
-        friend bool operator < (const HangDetector::HangAction& lhs, const HangDetector::HangAction& rhs);
-
-        ms                         m_delay       {30000};
-        std::function<void(void*)> m_callback    {nullptr};
-        void*                      m_userData    {nullptr};
-        time_point                 m_triggerTime {time_point::max()};
-        int                        m_threadId    {-1};
-
-        time_point triggerTime();
-        void update(time_point from);
-    };
-
     HangDetector();
     ~HangDetector();
 
@@ -51,10 +29,6 @@ private:
 
     void updateActions();
 };
-
-bool operator <(const HangDetector::HangAction& lhs, const HangDetector::HangAction& rhs) {
-    return lhs.m_triggerTime < rhs.m_triggerTime;
-}
 
 }
 #endif
