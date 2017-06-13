@@ -9,59 +9,45 @@
 using namespace std;
 using namespace std::chrono;
 
-namespace {
-atomic<int> g_instanceCount {0};
-mutex g_mutex;
-void initialize() {
-    unique_lock<mutex> lock(g_mutex);
-};
-void shutdown() {
-    unique_lock<mutex> lock(g_mutex);
-};
-}
-
 namespace HangDetector {
 
 HangDetector::HangAction::HangAction(ms delay, int threadId) {
-    
+    m_delay = delay;
+    m_threadId = threadId;
 }
 
 HangDetector::HangAction::HangAction(ms delay, std::function<void(void*)> callback, void *userData) {
-    
+    m_delay = delay;
+    m_callback = callback;
+    m_userData = userData;
 }
-    //   private:
-    //     int                        m_delay     {30000};
-    //     std::function<void(void*)> m_callback  {nullptr};
-    //     void*                      m_userData  {nullptr};
-    // };
 
 HangDetector::HangDetector() {
-    if (g_instanceCount.fetch_add(1) == 1) {
-        initialize();
-    }
 }
 
 HangDetector::~HangDetector() {
-    if (g_instanceCount.fetch_sub(1) == 1) {
-        shutdown();
-    }
+    stop();
 }
 
 void HangDetector::start(milliseconds interval) {
     m_interval = interval;
     time_point<steady_clock> triggerTime = time_point<steady_clock>::max();
     if (!m_actions.empty()) {
-        triggerTime = m_actions.top().m_triggerTime;
+        triggerTime = m_actions.top()->m_triggerTime;
     }
 
     m_thread = thread( [&, this] () {
             while (!m_shouldQuit) {
-                unique_lock<mutex> lock(g_mutex);
+                unique_lock<mutex> lock(m_mutex);
                 m_cv.wait_until(lock, triggerTime);
-                // check actions queue and fire expired actions
+
+                if (m_actions.empty())
+                    continue;
+
                 auto copy = m_actions;
-                for (HangAction a = copy.top(); a.m_triggerTime <= steady_clock::now(); ) {
-                    a.execute();
+                for (shared_ptr<HangAction> a = copy.top(); a->m_triggerTime <= steady_clock::now(); ) {
+                    a->execute();
+
                     a = copy.top();
                     copy.pop();
                 }
@@ -70,32 +56,38 @@ void HangDetector::start(milliseconds interval) {
 }
 
 void HangDetector::updateActions() {
-    
+    auto copy = m_actions;
+    for (shared_ptr<HangAction> a = copy.top(); a->m_triggerTime <= steady_clock::now(); ) {
+        a->update(steady_clock::now());
+        a = copy.top();
+        copy.pop();
+    }
 }
 
 
 void HangDetector::restart() {
-    unique_lock<mutex> lock(g_mutex);
+    unique_lock<mutex> lock(m_mutex);
     updateActions();
 }
 
 void HangDetector::stop() {
-    unique_lock<mutex> lock(g_mutex);
+    unique_lock<mutex> lock(m_mutex);
     m_shouldQuit = true;
     m_cv.notify_one();
+    m_thread.join();
 }
 
-void HangDetector::addAction(HangAction a) {
-    unique_lock<mutex> lock(g_mutex);
+void HangDetector::addAction(shared_ptr<HangAction> a) {
+    unique_lock<mutex> lock(m_mutex);
     m_actions.push(a);
     m_cv.notify_one();
 }
 
 void HangDetector::clearActions() {
-    // clear m_nextAction
+    unique_lock<mutex> lock(m_mutex);
+    while(!m_actions.empty())
+        m_actions.pop();
+    m_cv.notify_one();
 }
 
 }
-//   private:
-//     int m_interval {1000};
-// };
