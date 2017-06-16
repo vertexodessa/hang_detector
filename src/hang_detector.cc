@@ -18,8 +18,7 @@ HangDetector::~HangDetector() {
     stop();
 }
 
-void HangDetector::start(milliseconds interval) {
-    m_interval = interval;
+void HangDetector::start() {
     time_point triggerTime = time_point::max();
 
     m_thread = thread( [&, this] () {

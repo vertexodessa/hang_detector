@@ -16,7 +16,7 @@ public:
     HangDetector();
     ~HangDetector();
 
-    void start(ms interval = ms(1000));
+    void start();
     void stop();
     void restart();
     void addAction(std::shared_ptr<HangAction> a);
