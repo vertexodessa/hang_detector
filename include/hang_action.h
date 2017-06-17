@@ -44,10 +44,6 @@ private:
     void*                      m_userData    {nullptr};
 };
 
-// inline bool operator <(const std::shared_ptr<HangAction>& lhs, const std::shared_ptr<HangAction>& rhs) {
-//      return lhs->triggerTime() > rhs->triggerTime();
-// }
-
 }
 
 #endif

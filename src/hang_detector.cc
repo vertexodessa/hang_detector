@@ -9,16 +9,45 @@
 using namespace std;
 using namespace std::chrono;
 
-namespace HangDetector {
-
-HangDetector::HangDetector() {
+namespace {
+using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 }
 
-HangDetector::~HangDetector() {
+namespace HangDetector {
+
+class HangDetectorImpl {
+public:
+    HangDetectorImpl();
+    ~HangDetectorImpl();
+
+    void start();
+    void stop();
+    void restart();
+    void addAction(std::shared_ptr<HangAction> a);
+    void clearActions();
+private:
+    struct Compare {
+        bool operator () (const std::shared_ptr<HangAction>& lhs, const std::shared_ptr<HangAction>& rhs) {
+            return lhs->triggerTime() > rhs->triggerTime();
+        }
+    };
+    using Actions = std::priority_queue<std::shared_ptr<HangAction>, std::vector<std::shared_ptr<HangAction>>, Compare>;
+    std::thread m_thread;
+    std::condition_variable m_cv;
+    std::mutex m_mutex;
+    Actions m_actions;
+    volatile bool m_shouldQuit {false};
+
+    void updateActions();
+};
+
+HangDetectorImpl::HangDetectorImpl() { }
+
+HangDetectorImpl::~HangDetectorImpl() {
     stop();
 }
 
-void HangDetector::start() {
+void HangDetectorImpl::start() {
     time_point triggerTime = time_point::max();
 
     m_thread = thread( [&, this] () {
@@ -51,7 +80,7 @@ void HangDetector::start() {
         });
 }
 
-void HangDetector::updateActions() {
+void HangDetectorImpl::updateActions() {
     auto copy = m_actions;
     m_actions = Actions {};
 
@@ -63,12 +92,12 @@ void HangDetector::updateActions() {
     }
 }
 
-void HangDetector::restart() {
+void HangDetectorImpl::restart() {
     unique_lock<mutex> lock(m_mutex);
     updateActions();
 }
 
-void HangDetector::stop() {
+void HangDetectorImpl::stop() {
     {
         unique_lock<mutex> lock(m_mutex);
         m_shouldQuit = true;
@@ -77,17 +106,45 @@ void HangDetector::stop() {
     m_thread.join();
 }
 
-void HangDetector::addAction(shared_ptr<HangAction> a) {
+void HangDetectorImpl::addAction(shared_ptr<HangAction> a) {
     unique_lock<mutex> lock(m_mutex);
     a->update(steady_clock::now());
     m_actions.push(a);
     m_cv.notify_one();
 }
 
-void HangDetector::clearActions() {
+void HangDetectorImpl::clearActions() {
     unique_lock<mutex> lock(m_mutex);
     m_actions = Actions {};
     m_cv.notify_one();
 }
+
+HangDetector::HangDetector()  : m_impl(new HangDetectorImpl()) {
+}
+
+HangDetector::~HangDetector() {
+}
+
+void HangDetector::start() {
+    m_impl->start();
+}
+
+void HangDetector::restart() {
+    m_impl->restart();
+}
+
+void HangDetector::stop() {
+    m_impl->stop();
+}
+
+void HangDetector::addAction(shared_ptr<HangAction> a) {
+    m_impl->addAction(a);
+}
+
+void HangDetector::clearActions() {
+    m_impl->clearActions();
+}
+
+
 
 }
