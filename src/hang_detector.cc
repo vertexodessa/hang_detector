@@ -119,29 +119,29 @@ void HangDetectorImpl::clearActions() {
     m_cv.notify_one();
 }
 
-HangDetector::HangDetector()  : m_impl(new HangDetectorImpl()) {
+Detector::Detector()  : m_impl(new HangDetectorImpl()) {
 }
 
-HangDetector::~HangDetector() {
+Detector::~Detector() {
 }
 
-void HangDetector::start() {
+void Detector::start() {
     m_impl->start();
 }
 
-void HangDetector::restart() {
+void Detector::restart() {
     m_impl->restart();
 }
 
-void HangDetector::stop() {
+void Detector::stop() {
     m_impl->stop();
 }
 
-void HangDetector::addAction(shared_ptr<HangAction> a) {
+void Detector::addAction(shared_ptr<HangAction> a) {
     m_impl->addAction(a);
 }
 
-void HangDetector::clearActions() {
+void Detector::clearActions() {
     m_impl->clearActions();
 }
 

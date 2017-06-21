@@ -10,10 +10,10 @@ namespace HangDetector {
 
 class HangDetectorImpl;
 
-class HangDetector {
+class Detector {
 public:
-    HangDetector();
-    ~HangDetector();
+    Detector();
+    ~Detector();
 
     void start();
     void stop();
