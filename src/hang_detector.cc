@@ -37,6 +37,7 @@ private:
     std::mutex m_mutex;
     Actions m_actions;
     volatile bool m_shouldQuit {false};
+    bool m_started {false};
 
     void updateActions();
 };
@@ -48,6 +49,8 @@ HangDetectorImpl::~HangDetectorImpl() {
 }
 
 void HangDetectorImpl::start() {
+    m_started = true;
+
     time_point triggerTime = time_point::max();
 
     m_thread = thread( [&, this] () {
@@ -98,12 +101,16 @@ void HangDetectorImpl::restart() {
 }
 
 void HangDetectorImpl::stop() {
+    if (!m_started)
+        return;
+
     {
         unique_lock<mutex> lock(m_mutex);
         m_shouldQuit = true;
         m_cv.notify_one();
     }
     m_thread.join();
+    m_started = false;
 }
 
 void HangDetectorImpl::addAction(shared_ptr<HangAction> a) {

@@ -5,6 +5,11 @@ include( CTest )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Wextra -g")
 set(GTEST_BINARY_NAME GTestMain)
 
+find_package(PkgConfig)
+pkg_check_modules(BREAKPAD QUIET breakpad-client)
+include_directories(${BREAKPAD_INCLUDE_DIRS})
+link_directories(${BREAKPAD_LIBRARY_DIRS})
+
 enable_testing()
 add_test(AllTests ${GTEST_BINARY_NAME})
 
@@ -23,7 +28,7 @@ target_link_libraries(${GTEST_BINARY_NAME}
   ${GTEST_BOTH_LIBRARIES}
   -pthread
   ${LIB_NAME}
-  ${Boost_LIBRARIES}
+  ${BREAKPAD_LIBRARIES}
   )
 
 add_custom_command(TARGET ${GTEST_BINARY_NAME}
@@ -31,5 +36,5 @@ add_custom_command(TARGET ${GTEST_BINARY_NAME}
   )
 
 add_dependencies(${GTEST_BINARY_NAME}
-   ${LIB_NAME}
-   )
+  ${LIB_NAME}
+  )
