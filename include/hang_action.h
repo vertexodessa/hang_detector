@@ -4,11 +4,20 @@
 #include <functional>
 #include <thread>
 #include <chrono>
+#include <condition_variable>
 
 namespace HangDetector {
 
 using ms = std::chrono::milliseconds;
 using time_point = std::chrono::time_point<std::chrono::steady_clock>;
+
+namespace Utils {
+struct ForkAndCrashData {
+    int status {-1};
+    std::condition_variable cv;
+};
+void forkAndCrash(void* pData);
+}
 
 class HangAction {
 public:

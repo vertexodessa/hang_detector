@@ -3,9 +3,36 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #define gettid() syscall(SYS_gettid)
+#define log(...)
 
 namespace HangDetector {
+
+namespace Utils {
+void forkAndCrash(void* pData) {
+    ForkAndCrashData& data = *(ForkAndCrashData*)pData;
+    log("Callback fired in ForkTest on %d\n", getpid());
+
+    int pid = fork();
+    if (pid == 0) {
+        // crash
+        log("Child %d is going to crash\n", getpid());
+        kill(6, getpid());
+        exit(0);
+    } else if (pid > 0) {
+        log("Parent %d\n", getpid());
+        // wait until child crashes and generates minidump
+        waitpid(pid, &data.status, 0);
+        data.cv.notify_one();
+        log("Parent %d wait finished\n", getpid());
+    } else {
+        log("ERROR: fork finished unsuccessfully\n");
+    }
+}
+}
 
 KillAction::KillAction(ms delay) {
     m_delay = delay;
