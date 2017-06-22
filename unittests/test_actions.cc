@@ -83,11 +83,15 @@ TEST(ActionsTest, DiedAndGeneratedMinidump) {
     // check that the minidump was created
 }
 
-static void forkAndCrash(void* unused = nullptr) {
-    (void) unused;
+struct Data {
+    int status {-1};
+    condition_variable cv;
+};
+
+static void forkAndCrash(void* pData) {
+    Data& data = *(Data*)pData;
     log("Callback fired in ForkTest on %d\n", getpid());
 
-    int status;
     int pid = fork();
     if (pid == 0) {
         // crash
@@ -97,12 +101,11 @@ static void forkAndCrash(void* unused = nullptr) {
     } else if (pid > 0) {
         log("Parent %d\n", getpid());
         // wait until child crashes and generates minidump
-        ::waitpid(pid, &status, 0);
-        EXPECT_EQ(status, 0);
+        ::waitpid(pid, &data.status, 0);
+        data.cv.notify_one();
         log("Parent %d wait finished\n", getpid());
     } else {
         log("ERROR: fork finished unsuccessfully\n");
-        // FIXME: handle fork error
     }
 };
 
@@ -112,13 +115,22 @@ TEST(ActionsTest, ForkedAndGeneratedMinidump) {
     MinidumpDescriptor descriptor("./");
     ExceptionHandler eh(descriptor, nullptr, nullptr, nullptr, true, -1);
 
+    Timer t;
     // setup a CallbackAction to fork and kill the child with timeout
     Detector hd;
-    hd.addAction(make_shared<CallbackAction>(ms(500), forkAndCrash, nullptr));
+    Data status;
+    hd.addAction(make_shared<CallbackAction>(ms(500), forkAndCrash, &status));
     hd.start();
 
-    // sleep for 1 second
-    this_thread::sleep_for(ms(1000));
+    // wait for test to finish
+    mutex m;
+    unique_lock<mutex> lock(m);
+    status.cv.wait(lock);
+
+    EXPECT_LE(t.elapsed(), ms(1000));
+    EXPECT_GT(t.elapsed(), ms(100));
+
+    EXPECT_EQ(status.status, 0);
     // stop detector
     hd.stop();
 }
