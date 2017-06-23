@@ -12,3 +12,10 @@ add_subdirectory(${SRC_DIR})
 if (test)
     add_subdirectory(${TESTS_DIR})
 endif()
+
+set(PUBLIC_HEADERS
+  include/hang_action.h
+  include/hang_detector.h
+  )
+
+install(FILES ${PUBLIC_HEADERS}  DESTINATION include)

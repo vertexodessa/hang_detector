@@ -43,3 +43,5 @@ add_library(${LIB_NAME} SHARED ${SRC_FILES})
 target_link_libraries(${LIB_NAME}
   pthread
 )
+
+install(TARGETS ${LIB_NAME} DESTINATION lib)
