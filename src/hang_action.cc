@@ -42,12 +42,6 @@ KillAction::KillAction(ms delay) {
     m_threadId = gettid();
 }
 
-CallbackAction::CallbackAction(ms delay, std::function<void(void*)> callback, void *userData) {
-    m_delay = delay;
-    m_callback = callback;
-    m_userData = userData;
-}
-
 WriteMinidumpAction::WriteMinidumpAction(ms delay, const std::string path, int signal, std::condition_variable* cv) {
     m_delay = delay;
     m_signal = signal;
@@ -62,11 +56,6 @@ void HangAction::update (time_point now) {
 void KillAction::execute() {
     printf("Kill action executed. killing PID %d\n", m_threadId);
     kill(m_threadId, 6);
-}
-
-void CallbackAction::execute() {
-    if(m_callback)
-        m_callback(m_userData);
 }
 
 void WriteMinidumpAction::execute() {

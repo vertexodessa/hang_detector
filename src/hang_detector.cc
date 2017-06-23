@@ -87,8 +87,8 @@ void HangDetectorImpl::start() {
 }
 
 void HangDetectorImpl::updateActionsUnlocked() {
-    auto copy = m_actions;
-    m_actions = Actions {};
+    Actions copy;
+    copy.swap(m_actions);
 
     while(!copy.empty()) {
         auto a = copy.top();
@@ -105,16 +105,16 @@ void HangDetectorImpl::restart() {
 }
 
 void HangDetectorImpl::stop() {
-    if (!m_started)
-        return;
-
     {
         unique_lock<mutex> lock(m_mutex);
+        if (!m_started)
+            return;
+        m_started = false;
+
         m_shouldQuit = true;
         m_cv.notify_one();
     }
     m_thread.join();
-    m_started = false;
 }
 
 void HangDetectorImpl::addAction(shared_ptr<HangAction> a) {

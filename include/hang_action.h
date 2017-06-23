@@ -44,17 +44,8 @@ private:
     pid_t  m_threadId  {-1};
 };
 
-class CallbackAction : public HangAction {
-public:
-    CallbackAction(ms delay, std::function<void(void*)> callback, void *userData);
-    void execute() final;
-private:
-    std::function<void(void*)> m_callback    {nullptr};
-    void*                      m_userData    {nullptr};
-};
-
 // This action is useful if you're trying to investigate application performance issues.
-// Enable the core generation, install this action, investigate backtrace of the hang.
+// Install this action, investigate backtrace of the hang in the generated minidump.
 class WriteMinidumpAction : public HangAction {
 public:
     WriteMinidumpAction(ms delay, const std::string path = "./", int signal = 6, std::condition_variable* cv = nullptr);
@@ -63,6 +54,23 @@ private:
     int m_signal;
     std::string m_path;
     std::condition_variable* m_cv;
+};
+
+template <class T>
+class CallbackAction : public HangAction {
+public:
+    CallbackAction(ms delay, std::function<void(T*)> callback, T *userData) {
+        m_delay = delay;
+        m_callback = callback;
+        m_userData = userData;
+    }
+    void execute() final {
+        if(m_callback)
+            m_callback(m_userData);
+    }
+private:
+    std::function<void(T*)> m_callback    {nullptr};
+    T*                      m_userData    {nullptr};
 };
 
 }

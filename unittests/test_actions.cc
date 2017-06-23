@@ -20,30 +20,26 @@ private:
     chrono::time_point<steady_clock> m_started;
 };
 
-// class ActionTest : public ::testing::Test {
-// protected:
-//     void SetUp() override { }
-//     void TearDown() override { }
-// };
-
 TEST(ActionsTest, RestartWorks) {
     Detector hd;
-    hd.addAction(make_shared<CallbackAction>(ms(500), [](void* ){
-            }, nullptr));
+    volatile bool triggered = false;
+    hd.addAction(make_shared<CallbackAction<volatile bool>>(ms(500), [](volatile bool* arg){
+                *arg = true;
+            }, &triggered));
     hd.start();
 
     this_thread::sleep_for(ms(300));
     hd.restart();
 
     this_thread::sleep_for(ms(300));
+    EXPECT_EQ(triggered, false);
 }
 
 TEST(ActionsTest, 1SecActionWasTriggeredOnce) {
     Detector hd;
-    int count = 0;
-    hd.addAction(make_shared<CallbackAction>(ms(950), [](void* count_){
-                int* count = static_cast<int*>(count_);
-                (*count)++;
+    volatile int count = 0;
+    hd.addAction(make_shared<CallbackAction<volatile int>>(ms(950), [](volatile int* arg){
+                (*arg)++;
             }, &count));
     hd.start();
     this_thread::sleep_for(ms(1000));
@@ -52,10 +48,9 @@ TEST(ActionsTest, 1SecActionWasTriggeredOnce) {
 
 TEST(ActionsTest, 500MSecActionWasTriggeredOnce) {
     Detector hd;
-    int count = 0;
-    hd.addAction(make_shared<CallbackAction>(ms(500), [](void* count_){
-                int* count = static_cast<int*>(count_);
-                (*count)++;
+    volatile int count = 0;
+    hd.addAction(make_shared<CallbackAction<volatile int>>(ms(500), [](volatile int* arg){
+                (*arg)++;
             }, &count));
     hd.start();
     this_thread::sleep_for(ms(700));
@@ -64,14 +59,33 @@ TEST(ActionsTest, 500MSecActionWasTriggeredOnce) {
 
 TEST(ActionsTest, Three950MsActionsAfter5Seconds) {
     Detector hd;
-    int count = 0;
-    hd.addAction(make_shared<CallbackAction>(ms(950), [](void* count_){
-                int* count = static_cast<int*>(count_);
+    volatile int count = 0;
+    hd.addAction(make_shared<CallbackAction<volatile int>>(ms(950), [](volatile int* count){
                 (*count)++;
             }, &count));
     hd.start();
     this_thread::sleep_for(ms(3000));
     EXPECT_EQ(count, 3);
+}
+
+TEST(ActionsTest, WriteMinidumpAction) {
+    Timer t;
+    // setup a CallbackAction to fork and kill the child with timeout
+    Detector hd;
+    condition_variable cv;
+    hd.addAction(make_shared<WriteMinidumpAction>(ms(200), "./", 6, &cv));
+    hd.start();
+
+    // wait for test to finish
+    mutex m;
+    unique_lock<mutex> lock(m);
+    cv.wait_for(lock, ms(5000));
+
+    // stop detector
+    hd.stop();
+
+    EXPECT_LE(duration_cast<milliseconds>(t.elapsed()).count(), 1000);
+    EXPECT_GT(duration_cast<milliseconds>(t.elapsed()).count(), 100);
 }
 
 TEST(ActionsTest, KilledOnTimeout) {
@@ -86,27 +100,7 @@ TEST(ActionsTest, KilledOnTimeout) {
     //     }(), ".*");
 }
 
-TEST(ActionsTest, WriteMinidumpAction) {
-    Timer t;
-    // setup a CallbackAction to fork and kill the child with timeout
-    Detector hd;
-    condition_variable cv;
-    hd.addAction(make_shared<WriteMinidumpAction>(ms(500), "./", 6, &cv));
-    hd.start();
-
-    // wait for test to finish
-    mutex m;
-    unique_lock<mutex> lock(m);
-    cv.wait_for(lock, ms(2000));
-
-    // stop detector
-    hd.stop();
-
-    EXPECT_LE(duration_cast<milliseconds>(t.elapsed()).count(), 1000);
-    EXPECT_GT(duration_cast<milliseconds>(t.elapsed()).count(), 100);
-}
-
-TEST(BreakpadTest, WriteMinidumpAction) {
+TEST(BreakpadTest, TwoHandlers) {
     // FIXME: make sure it's possible to create two minidump handlers in a single app
 }
 
