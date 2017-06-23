@@ -53,6 +53,18 @@ private:
     void*                      m_userData    {nullptr};
 };
 
+// This action is useful if you're trying to investigate application performance issues.
+// Enable the core generation, install this action, investigate backtrace of the hang.
+class ForkAndKillAction : public HangAction {
+public:
+    ForkAndKillAction(ms delay, int signal = 6, Utils::ForkAndCrashData* data = nullptr);
+    void execute() final;
+private:
+    int m_signal;
+    std::condition_variable m_cv;
+    Utils::ForkAndCrashData* m_data;
+};
+
 }
 
 #endif

@@ -111,6 +111,33 @@ TEST(ActionsTest, ForkedAndGeneratedMinidump) {
     EXPECT_EQ(status.status, 0);
 }
 
+TEST(ActionsTest, ForkAndKillAction) {
+    // install breakpad handlers
+    using namespace google_breakpad;
+    MinidumpDescriptor descriptor("./");
+    ExceptionHandler eh(descriptor, nullptr, nullptr, nullptr, true, -1);
+
+    Timer t;
+    // setup a CallbackAction to fork and kill the child with timeout
+    Detector hd;
+    Utils::ForkAndCrashData status;
+    hd.addAction(make_shared<ForkAndKillAction>(ms(500), 6, &status));
+    hd.start();
+
+    // wait for test to finish
+    mutex m;
+    unique_lock<mutex> lock(m);
+    status.cv.wait_for(lock, ms(2000));
+
+    // stop detector
+    hd.stop();
+
+    EXPECT_LE(t.elapsed(), ms(1000));
+    EXPECT_GT(t.elapsed(), ms(100));
+
+    EXPECT_EQ(status.status, 0);
+}
+
 TEST(HangDetectorTest, NotStartedDoesNotHangOrDie) {
     Detector hd;
 }
