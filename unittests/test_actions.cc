@@ -74,68 +74,28 @@ TEST(ActionsTest, KilledOnTimeout) {
     //     }(), ".*");
 }
 
-TEST(ActionsTest, DiedAndGeneratedMinidump) {
-    // install breakpad handlers
-    // setup a CallbackAction to fork and kill the child with timeout = 1.5 sec
-    // EXPECT_DEATH with a nullptr
-    // stop detector
-    // teardown breakpad
-    // check that the minidump was created
-}
-
-
-TEST(ActionsTest, ForkedAndGeneratedMinidump) {
-    // install breakpad handlers
-    using namespace google_breakpad;
-    MinidumpDescriptor descriptor("./");
-    ExceptionHandler eh(descriptor, nullptr, nullptr, nullptr, true, -1);
-
+TEST(ActionsTest, WriteMinidumpAction) {
     Timer t;
     // setup a CallbackAction to fork and kill the child with timeout
     Detector hd;
-    Utils::ForkAndCrashData status;
-    hd.addAction(make_shared<CallbackAction>(ms(500), Utils::forkAndCrash, &status));
+    condition_variable cv;
+    hd.addAction(make_shared<WriteMinidumpAction>(ms(500), "./", 6, &cv));
     hd.start();
 
     // wait for test to finish
     mutex m;
     unique_lock<mutex> lock(m);
-    status.cv.wait_for(lock, ms(2000));
+    cv.wait_for(lock, ms(2000));
 
     // stop detector
     hd.stop();
 
-    EXPECT_LE(t.elapsed(), ms(1000));
-    EXPECT_GT(t.elapsed(), ms(100));
-
-    EXPECT_EQ(status.status, 0);
+    EXPECT_LE(duration_cast<milliseconds>(t.elapsed()).count(), 1000);
+    EXPECT_GT(duration_cast<milliseconds>(t.elapsed()).count(), 100);
 }
 
-TEST(ActionsTest, ForkAndKillAction) {
-    // install breakpad handlers
-    using namespace google_breakpad;
-    MinidumpDescriptor descriptor("./");
-    ExceptionHandler eh(descriptor, nullptr, nullptr, nullptr, true, -1);
-
-    Timer t;
-    // setup a CallbackAction to fork and kill the child with timeout
-    Detector hd;
-    Utils::ForkAndCrashData status;
-    hd.addAction(make_shared<ForkAndKillAction>(ms(500), 6, &status));
-    hd.start();
-
-    // wait for test to finish
-    mutex m;
-    unique_lock<mutex> lock(m);
-    status.cv.wait_for(lock, ms(2000));
-
-    // stop detector
-    hd.stop();
-
-    EXPECT_LE(t.elapsed(), ms(1000));
-    EXPECT_GT(t.elapsed(), ms(100));
-
-    EXPECT_EQ(status.status, 0);
+TEST(BreakpadTest, WriteMinidumpAction) {
+    // FIXME: make sure it's possible to create two minidump handlers in a single app
 }
 
 TEST(HangDetectorTest, NotStartedDoesNotHangOrDie) {

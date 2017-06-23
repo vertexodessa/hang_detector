@@ -55,14 +55,14 @@ private:
 
 // This action is useful if you're trying to investigate application performance issues.
 // Enable the core generation, install this action, investigate backtrace of the hang.
-class ForkAndKillAction : public HangAction {
+class WriteMinidumpAction : public HangAction {
 public:
-    ForkAndKillAction(ms delay, int signal = 6, Utils::ForkAndCrashData* data = nullptr);
+    WriteMinidumpAction(ms delay, const std::string path = "./", int signal = 6, std::condition_variable* cv = nullptr);
     void execute() final;
 private:
     int m_signal;
-    std::condition_variable m_cv;
-    Utils::ForkAndCrashData* m_data;
+    std::string m_path;
+    std::condition_variable* m_cv;
 };
 
 }

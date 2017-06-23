@@ -55,13 +55,13 @@ void HangDetectorImpl::start() {
 
     m_thread = thread( [&, this] () {
             while (!m_shouldQuit) {
+                unique_lock<mutex> lock(m_mutex);
+
                 if (!m_actions.empty()) {
                     triggerTime = m_actions.top()->triggerTime();
                 } else {
                     triggerTime = time_point::max();
                 }
-
-                unique_lock<mutex> lock(m_mutex);
                 m_cv.wait_until(lock, triggerTime);
 
                 if (m_actions.empty())

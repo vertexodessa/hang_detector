@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++1y -Wall -Wextra -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Wextra -g -fstack-protector-all")
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 #set(LIB_NAME
@@ -10,6 +10,11 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 #set(APP_NAME
 #  hangdetector_test
 #)
+
+find_package(PkgConfig)
+pkg_check_modules(BREAKPAD QUIET breakpad-client)
+include_directories(${BREAKPAD_INCLUDE_DIRS})
+link_directories(${BREAKPAD_LIBRARY_DIRS})
 
 include_directories(
   .

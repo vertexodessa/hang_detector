@@ -1,5 +1,8 @@
 #include "hang_detector.h"
 
+// FIXME: make Breakpad integration optional (build define)
+#include <client/linux/handler/exception_handler.h>
+
 #include <signal.h>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -45,10 +48,11 @@ CallbackAction::CallbackAction(ms delay, std::function<void(void*)> callback, vo
     m_userData = userData;
 }
 
-ForkAndKillAction::ForkAndKillAction(ms delay, int signal, Utils::ForkAndCrashData* data) {
+WriteMinidumpAction::WriteMinidumpAction(ms delay, const std::string path, int signal, std::condition_variable* cv) {
     m_delay = delay;
     m_signal = signal;
-    m_data = data;
+    m_cv = cv;
+    m_path = path;
 }
 
 void HangAction::update (time_point now) {
@@ -65,29 +69,24 @@ void CallbackAction::execute() {
         m_callback(m_userData);
 }
 
-void ForkAndKillAction::execute() {
-    log("ForkAndKillAction::execute %d\n", getpid());
+void WriteMinidumpAction::execute() {
+    using namespace google_breakpad;
+    static MinidumpDescriptor descriptor(m_path.c_str());
 
-    int pid = fork();
-    if (pid == 0) {
-        // crash
-        log("Child %d is going to crash\n", getpid());
-        kill(m_signal, getpid());
-        exit(0);
-    } else if (pid > 0) {
-        log("Parent %d\n", getpid());
-        // wait until child crashes and generates minidump
-        int status;
-        waitpid(pid, &status, 0);
-        if (m_data) {
-            m_data->status = status;
-            m_data->cv.notify_one();
-        }
-        log("Parent %d wait finished\n", getpid());
-    } else {
-        log("ERROR: fork finished unsuccessfully\n");
-    }
+    auto callback = [](const MinidumpDescriptor& /*descriptor*/,
+                       void* /*context*/,
+                       bool succeeded) -> bool {
+        log("callback!\n");
+        return succeeded;
+    };
 
+    ExceptionHandler eh(descriptor, nullptr, callback, nullptr, true, -1);
+
+    log("Child %d is going to crash with signal %d\n", getpid(), m_signal);
+    eh.WriteMinidump();
+
+    if(m_cv)
+        m_cv->notify_one();
 }
 
 }

@@ -2,7 +2,7 @@ project(unittests)
 
 include( CTest )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Wextra -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Wextra -g -fstack-protector-all")
 set(GTEST_BINARY_NAME GTestMain)
 
 find_package(PkgConfig)
