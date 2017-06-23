@@ -39,7 +39,7 @@ private:
     volatile bool m_shouldQuit {false};
     bool m_started {false};
 
-    void updateActions();
+    void updateActionsUnlocked();
 };
 
 HangDetectorImpl::HangDetectorImpl() { }
@@ -49,6 +49,9 @@ HangDetectorImpl::~HangDetectorImpl() {
 }
 
 void HangDetectorImpl::start() {
+    if(m_started)
+        return;
+
     m_started = true;
 
     time_point triggerTime = time_point::max();
@@ -66,7 +69,7 @@ void HangDetectorImpl::start() {
 
                 if (m_actions.empty())
                     continue;
-                if(m_shouldQuit)
+                if (m_shouldQuit)
                     return;
 
                 shared_ptr<HangAction> a = m_actions.top();
@@ -83,21 +86,22 @@ void HangDetectorImpl::start() {
         });
 }
 
-void HangDetectorImpl::updateActions() {
+void HangDetectorImpl::updateActionsUnlocked() {
     auto copy = m_actions;
     m_actions = Actions {};
 
-    for (shared_ptr<HangAction> a = copy.top(); a->triggerTime() <= steady_clock::now(); ) {
+    while(!copy.empty()) {
+        auto a = copy.top();
         a->update(steady_clock::now());
-        a = copy.top();
-        copy.pop();
         m_actions.push(a);
+        copy.pop();
     }
 }
 
 void HangDetectorImpl::restart() {
     unique_lock<mutex> lock(m_mutex);
-    updateActions();
+    updateActionsUnlocked();
+    m_cv.notify_one();
 }
 
 void HangDetectorImpl::stop() {

@@ -26,6 +26,18 @@ private:
 //     void TearDown() override { }
 // };
 
+TEST(ActionsTest, RestartWorks) {
+    Detector hd;
+    hd.addAction(make_shared<CallbackAction>(ms(500), [](void* ){
+            }, nullptr));
+    hd.start();
+
+    this_thread::sleep_for(ms(300));
+    hd.restart();
+
+    this_thread::sleep_for(ms(300));
+}
+
 TEST(ActionsTest, 1SecActionWasTriggeredOnce) {
     Detector hd;
     int count = 0;
@@ -50,7 +62,7 @@ TEST(ActionsTest, 500MSecActionWasTriggeredOnce) {
     EXPECT_EQ(count, 1);
 }
 
-TEST(ActionsTest, Five950MsActionsAfter5Seconds) {
+TEST(ActionsTest, Three950MsActionsAfter5Seconds) {
     Detector hd;
     int count = 0;
     hd.addAction(make_shared<CallbackAction>(ms(950), [](void* count_){
@@ -58,8 +70,8 @@ TEST(ActionsTest, Five950MsActionsAfter5Seconds) {
                 (*count)++;
             }, &count));
     hd.start();
-    this_thread::sleep_for(ms(5000));
-    EXPECT_EQ(count, 5);
+    this_thread::sleep_for(ms(3000));
+    EXPECT_EQ(count, 3);
 }
 
 TEST(ActionsTest, KilledOnTimeout) {
