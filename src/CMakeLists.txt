@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.5)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Wextra -g -fstack-protector-all")
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})

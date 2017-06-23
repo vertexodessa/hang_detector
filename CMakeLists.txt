@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.5)
 
 set(SRC_DIR src)
 set(TESTS_DIR unittests)
