@@ -54,9 +54,8 @@ void HangDetectorImpl::start() {
 
     m_started = true;
 
-    time_point triggerTime = time_point::max();
-
-    m_thread = thread( [&, this] () {
+    m_thread = thread( [this] () {
+            time_point triggerTime = time_point::max();
             while (!m_shouldQuit) {
                 unique_lock<mutex> lock(m_mutex);
 
@@ -67,10 +66,10 @@ void HangDetectorImpl::start() {
                 }
                 m_cv.wait_until(lock, triggerTime);
 
-                if (m_actions.empty())
-                    continue;
                 if (m_shouldQuit)
                     return;
+                if (m_actions.empty())
+                    continue;
 
                 shared_ptr<HangAction> a = m_actions.top();
 
