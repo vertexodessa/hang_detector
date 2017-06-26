@@ -8,6 +8,10 @@ pkg_check_modules(BREAKPAD QUIET breakpad-client)
 include_directories(${BREAKPAD_INCLUDE_DIRS})
 link_directories(${BREAKPAD_LIBRARY_DIRS})
 
+pkg_check_modules(GLIB glib-2.0)
+include_directories(${GLIB_INCLUDE_DIRS})
+link_directories(${GLIB_LIBRARY_DIRS})
+
 include_directories(
   .
   ${CMAKE_SOURCE_DIR}/include
@@ -15,6 +19,7 @@ include_directories(
 
 set(SRC_FILES
   hang_detector.cc
+  hang_detector_glib.cc
   hang_action.cc
 )
 

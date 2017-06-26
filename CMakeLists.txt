@@ -16,6 +16,7 @@ endif()
 set(PUBLIC_HEADERS
   include/hang_action.h
   include/hang_detector.h
+  include/hang_detector_glib.h
   )
 
 install(FILES ${PUBLIC_HEADERS}  DESTINATION include)

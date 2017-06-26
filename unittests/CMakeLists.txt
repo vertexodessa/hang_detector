@@ -11,10 +11,16 @@ include( CTest )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++14 -Wall -Wextra -g")
 set(GTEST_BINARY_NAME GTestMain)
 
+#FIXME: conditional breakpad inclusion
 find_package(PkgConfig)
 pkg_check_modules(BREAKPAD QUIET breakpad-client)
 include_directories(${BREAKPAD_INCLUDE_DIRS})
 link_directories(${BREAKPAD_LIBRARY_DIRS})
+
+#FIXME: conditional glib-2.0 inclusion
+pkg_check_modules(GLIB glib-2.0)
+include_directories(${GLIB_INCLUDE_DIRS})
+link_directories(${GLIB_LIBRARY_DIRS})
 
 enable_testing()
 add_test(AllTests ${GTEST_BINARY_NAME})
@@ -35,6 +41,7 @@ target_link_libraries(${GTEST_BINARY_NAME}
   -pthread
   ${LIB_NAME}
   ${BREAKPAD_LIBRARIES}
+  ${GLIB_LIBRARIES}
   )
 
 add_custom_command(TARGET ${GTEST_BINARY_NAME}

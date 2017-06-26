@@ -1,4 +1,5 @@
 #include "hang_detector.h"
+#include "hang_detector_glib.h"
 
 #include <client/linux/handler/exception_handler.h>
 #include <gtest/gtest.h>
@@ -108,4 +109,40 @@ TEST(HangDetectorTest, NotStartedDoesNotHangOrDie) {
     Detector hd;
 }
 
+TEST(HangDetectorGlib, StartsAndExecutedOnMainLoop) {
+    DetectorGlib hd;
 
+    typedef struct {
+        volatile int counter10ms = 0;
+        volatile int counter200ms = 0;
+        GMainLoop* m_loop {nullptr};
+    } Data;
+    Data d;
+
+    d.counter200ms = 0;
+    d.counter10ms = 0;
+
+    hd.addAction(make_shared<CallbackAction<Data>>(ms(200), [](auto* d){
+                printf("log: incrementing counter200\n");
+                ++(d->counter200ms);
+            }, &d));
+
+    hd.addAction(make_shared<CallbackAction<Data>>(ms(10), [](auto* d){
+                if (++d->counter10ms >= 30) {
+                    // 300 ms have passed.
+                    // 200ms callback should not fire, since it's reset by the detector loop.
+                    g_main_loop_quit(d->m_loop);
+                }
+            }, &d));
+
+    d.m_loop = g_main_loop_new(g_main_context_get_thread_default(), false);
+
+    hd.startWithInterval(ms(50));
+    hd.start();
+
+    g_main_loop_run(d.m_loop);
+    g_main_loop_unref(d.m_loop);
+
+    EXPECT_EQ(d.counter200ms, 0);
+    EXPECT_GT(d.counter10ms, 20);
+}
