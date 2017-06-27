@@ -42,9 +42,8 @@ KillAction::KillAction(ms delay) {
     m_threadId = gettid();
 }
 
-WriteMinidumpAction::WriteMinidumpAction(ms delay, const std::string path, int signal, std::condition_variable* cv) {
+WriteMinidumpAction::WriteMinidumpAction(ms delay, const std::string path,  std::condition_variable* cv) {
     m_delay = delay;
-    m_signal = signal;
     m_cv = cv;
     m_path = path;
 }
@@ -70,11 +69,9 @@ void WriteMinidumpAction::execute() {
     };
 
     ExceptionHandler eh(descriptor, nullptr, callback, nullptr, true, -1);
-
-    log("Child %d is going to crash with signal %d\n", getpid(), m_signal);
     eh.WriteMinidump();
 
-    if(m_cv)
+    if (m_cv)
         m_cv->notify_one();
 }
 

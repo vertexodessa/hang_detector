@@ -48,10 +48,9 @@ private:
 // Install this action, investigate backtrace of the hang in the generated minidump.
 class WriteMinidumpAction : public HangAction {
 public:
-    WriteMinidumpAction(ms delay, const std::string path = "./", int signal = 6, std::condition_variable* cv = nullptr);
+    WriteMinidumpAction(ms delay, const std::string path = "./", std::condition_variable* cv = nullptr);
     void execute() final;
 private:
-    int m_signal;
     std::string m_path;
     std::condition_variable* m_cv;
 };
