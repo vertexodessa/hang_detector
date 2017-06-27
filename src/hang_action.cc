@@ -37,8 +37,9 @@ void forkAndCrash(void* pData) {
 }
 }
 
-KillAction::KillAction(ms delay) {
+KillAction::KillAction(ms delay, int signal) {
     m_delay = delay;
+    m_signal = signal;
     m_threadId = gettid();
 }
 
@@ -54,7 +55,7 @@ void HangAction::update (time_point now) {
 
 void KillAction::execute() {
     printf("Kill action executed. killing PID %d\n", m_threadId);
-    kill(m_threadId, 6);
+    kill(m_threadId, signal);
 }
 
 void WriteMinidumpAction::execute() {

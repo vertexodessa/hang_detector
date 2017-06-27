@@ -38,10 +38,11 @@ protected:
 
 class KillAction : public HangAction {
 public:
-    KillAction(ms delay);
+    KillAction(ms delay, int signal = 6);
     void execute() final;
 private:
     pid_t  m_threadId  {-1};
+    int m_signal;
 };
 
 // This action is useful if you're trying to investigate application performance issues.
