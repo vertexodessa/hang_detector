@@ -74,7 +74,7 @@ TEST(ActionsTest, WriteMinidumpAction) {
     // setup a CallbackAction to fork and kill the child with timeout
     Detector hd;
     condition_variable cv;
-    hd.addAction(make_shared<WriteMinidumpAction>(ms(200), "./", 6, &cv));
+    hd.addAction(make_shared<WriteMinidumpAction>(ms(200), "./", &cv));
     hd.start();
 
     // wait for test to finish
