@@ -29,4 +29,7 @@ target_link_libraries(${LIB_NAME}
   pthread
 )
 
+set_target_properties(${LIB_NAME} PROPERTIES VERSION "0.1"
+                                             SOVERSION 0)
+
 install(TARGETS ${LIB_NAME} DESTINATION lib)
