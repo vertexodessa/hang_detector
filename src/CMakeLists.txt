@@ -27,6 +27,7 @@ add_library(${LIB_NAME} SHARED ${SRC_FILES})
 
 target_link_libraries(${LIB_NAME}
   pthread
+  ${BREAKPAD_LIBRARIES}
 )
 
 set_target_properties(${LIB_NAME} PROPERTIES VERSION "0.1"
