@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.5)
 set(SRC_DIR src)
 set(TESTS_DIR unittests)
 
-project(hang_detector)
+project(hangdetector)
 
 #set(APP_NAME "${PROJECT_NAME}_bin")
 set(LIB_NAME "${PROJECT_NAME}")
@@ -18,5 +18,14 @@ set(PUBLIC_HEADERS
   include/hang_detector.h
   include/hang_detector_glib.h
   )
+
+# pkg-config
+configure_file(hangdetector.pc.cmake hangdetector.pc @ONLY)
+install(
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/hangdetector.pc"
+    DESTINATION
+    lib/pkgconfig
+)
 
 install(FILES ${PUBLIC_HEADERS}  DESTINATION include)
