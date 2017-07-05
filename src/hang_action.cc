@@ -55,7 +55,7 @@ void HangAction::update (time_point now) {
 
 void KillAction::execute() {
     printf("Kill action executed. killing PID %d\n", m_threadId);
-    kill(m_threadId, signal);
+    kill(m_threadId, m_signal);
 }
 
 void WriteMinidumpAction::execute() {
