@@ -5,6 +5,6 @@ libdir=${exec_prefix}/lib
 
 Name: hangdetector
 Description: The hangdetector library
-Version: @HANGDETECTOR_VERSION@
+Version: 0.1
 Cflags: -I${includedir}
 Libs: -L${libdir} -lhangdetector
