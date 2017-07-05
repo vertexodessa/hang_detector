@@ -17,6 +17,7 @@ set(PUBLIC_HEADERS
   include/hang_action.h
   include/hang_detector.h
   include/hang_detector_glib.h
+  include/hang_detector_utils.h
   )
 
 # pkg-config
