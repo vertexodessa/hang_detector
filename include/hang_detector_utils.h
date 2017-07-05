@@ -40,7 +40,7 @@ inline bool initFromEnvironment(HangDetector::DetectorGlib& hd, const std::strin
     if (logTimeout != -1 ) {
         printf("Installing hang log callback for %d milliseconds\n", logTimeout);
         auto logAction = std::make_shared<HangDetector::CallbackAction<void>>(HangDetector::ms(logTimeout), [=](void*) {
-                printf("Main loop hung for %d milliseconds\n", logTimeout);
+                printf("Main loop %d hung for %d milliseconds\n", getpid(), logTimeout);
                 fflush(stdout);
             }, nullptr);
         hd.addAction(logAction);
